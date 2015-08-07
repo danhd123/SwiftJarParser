@@ -8,6 +8,13 @@
 
 /* Begin PBXBuildFile section */
 		BCBA39AA1B3032EB007E8A2E /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = BCBA39A91B3032EB007E8A2E /* main.swift */; };
+		BCBA39B11B303310007E8A2E /* ClassFile.swift in Sources */ = {isa = PBXBuildFile; fileRef = BCBA39B01B303310007E8A2E /* ClassFile.swift */; };
+		BCBA39B71B3164FB007E8A2E /* ClassConstant.swift in Sources */ = {isa = PBXBuildFile; fileRef = BCBA39B61B3164FB007E8A2E /* ClassConstant.swift */; };
+		BCE57D7B1B5106C10064EF55 /* Annotation.swift in Sources */ = {isa = PBXBuildFile; fileRef = BCE57D7A1B5106C10064EF55 /* Annotation.swift */; };
+		BCE57D7D1B58D65D0064EF55 /* MethodInfo.swift in Sources */ = {isa = PBXBuildFile; fileRef = BCE57D7C1B58D65D0064EF55 /* MethodInfo.swift */; };
+		BCFCA2B91B4B59FD00F02E2F /* FieldInfo.swift in Sources */ = {isa = PBXBuildFile; fileRef = BCFCA2B81B4B59FD00F02E2F /* FieldInfo.swift */; };
+		BCFCA2BB1B4B5CA500F02E2F /* AttributeInfo.swift in Sources */ = {isa = PBXBuildFile; fileRef = BCFCA2BA1B4B5CA500F02E2F /* AttributeInfo.swift */; };
+		BCFCA2BD1B4C710E00F02E2F /* StackMapTableAttribute.swift in Sources */ = {isa = PBXBuildFile; fileRef = BCFCA2BC1B4C710E00F02E2F /* StackMapTableAttribute.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -25,6 +32,13 @@
 /* Begin PBXFileReference section */
 		BCBA39A61B3032EB007E8A2E /* JarParser */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = JarParser; sourceTree = BUILT_PRODUCTS_DIR; };
 		BCBA39A91B3032EB007E8A2E /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
+		BCBA39B01B303310007E8A2E /* ClassFile.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ClassFile.swift; sourceTree = "<group>"; };
+		BCBA39B61B3164FB007E8A2E /* ClassConstant.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ClassConstant.swift; sourceTree = "<group>"; };
+		BCE57D7A1B5106C10064EF55 /* Annotation.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Annotation.swift; sourceTree = "<group>"; };
+		BCE57D7C1B58D65D0064EF55 /* MethodInfo.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MethodInfo.swift; sourceTree = "<group>"; };
+		BCFCA2B81B4B59FD00F02E2F /* FieldInfo.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FieldInfo.swift; sourceTree = "<group>"; };
+		BCFCA2BA1B4B5CA500F02E2F /* AttributeInfo.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AttributeInfo.swift; sourceTree = "<group>"; };
+		BCFCA2BC1B4C710E00F02E2F /* StackMapTableAttribute.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = StackMapTableAttribute.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -58,6 +72,13 @@
 			isa = PBXGroup;
 			children = (
 				BCBA39A91B3032EB007E8A2E /* main.swift */,
+				BCBA39B01B303310007E8A2E /* ClassFile.swift */,
+				BCBA39B61B3164FB007E8A2E /* ClassConstant.swift */,
+				BCFCA2B81B4B59FD00F02E2F /* FieldInfo.swift */,
+				BCFCA2BA1B4B5CA500F02E2F /* AttributeInfo.swift */,
+				BCFCA2BC1B4C710E00F02E2F /* StackMapTableAttribute.swift */,
+				BCE57D7A1B5106C10064EF55 /* Annotation.swift */,
+				BCE57D7C1B58D65D0064EF55 /* MethodInfo.swift */,
 			);
 			path = JarParser;
 			sourceTree = "<group>";
@@ -118,6 +139,13 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				BCE57D7D1B58D65D0064EF55 /* MethodInfo.swift in Sources */,
+				BCBA39B71B3164FB007E8A2E /* ClassConstant.swift in Sources */,
+				BCFCA2BD1B4C710E00F02E2F /* StackMapTableAttribute.swift in Sources */,
+				BCFCA2BB1B4B5CA500F02E2F /* AttributeInfo.swift in Sources */,
+				BCBA39B11B303310007E8A2E /* ClassFile.swift in Sources */,
+				BCFCA2B91B4B59FD00F02E2F /* FieldInfo.swift in Sources */,
+				BCE57D7B1B5106C10064EF55 /* Annotation.swift in Sources */,
 				BCBA39AA1B3032EB007E8A2E /* main.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -236,6 +264,7 @@
 				BCBA39AF1B3032EB007E8A2E /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};
