@@ -10,7 +10,7 @@ import Foundation
 
 struct FieldInfo {
     
-    struct AccessFlags: OptionSetType {
+    struct AccessFlags: OptionSet {
         let rawValue: UInt16
         init(rawValue: UInt16) { self.rawValue = rawValue }
         
@@ -35,7 +35,7 @@ struct FieldInfo {
     
     let name : Utf8Constant
     let descriptor : Utf8Constant
-    init(data: NSData, inout cursor:Int, constantPool:[UInt16: ClassConstant]) {
+    init(data: Data, cursor:inout Int, constantPool:[UInt16: ClassConstant]) {
         accessFlags = AccessFlags(rawValue: NSSwapBigShortToHost(readFromData(data, cursor: &cursor)))
         nameIndex = NSSwapBigShortToHost(readFromData(data, cursor: &cursor))
         descriptorIndex = NSSwapBigShortToHost(readFromData(data, cursor: &cursor))

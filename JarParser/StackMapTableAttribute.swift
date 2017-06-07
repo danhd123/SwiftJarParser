@@ -13,80 +13,80 @@ class StackMapTableAttribute: AttributeInfo {
     class StackMapFrame: NSObject {
         
         enum Tag {
-            case Same(UInt8)
-            case SameLocals1StackItem(UInt8)
-            case SameLocals1StackItemExtended
-            case Chop(UInt8)
-            case SameFrameExtended
-            case Append(UInt8)
-            case FullFrame
-            static func fromRaw(rawValue:UInt8) -> Tag? {
+            case same(UInt8)
+            case sameLocals1StackItem(UInt8)
+            case sameLocals1StackItemExtended
+            case chop(UInt8)
+            case sameFrameExtended
+            case append(UInt8)
+            case fullFrame
+            static func fromRaw(_ rawValue:UInt8) -> Tag? {
                 switch rawValue {
                 case 0...63:
-                    return Same(rawValue)
+                    return same(rawValue)
                 case 64...127:
-                    return SameLocals1StackItem(rawValue)
+                    return sameLocals1StackItem(rawValue)
                 case 247:
-                    return SameLocals1StackItemExtended
+                    return sameLocals1StackItemExtended
                 case 248...250:
-                    return Chop(rawValue)
+                    return chop(rawValue)
                 case 251:
-                    return SameFrameExtended
+                    return sameFrameExtended
                 case 252...254:
-                    return Append(rawValue)
+                    return append(rawValue)
                 case 255:
-                    return FullFrame
+                    return fullFrame
                 default:
                     return nil
                 }
             }
             func value() -> UInt8 {
                 switch self {
-                case let .Same(rawValue):
+                case let .same(rawValue):
                     return rawValue
-                case let .SameLocals1StackItem(rawValue):
+                case let .sameLocals1StackItem(rawValue):
                     return rawValue
-                case .SameLocals1StackItemExtended:
+                case .sameLocals1StackItemExtended:
                     return 247
-                case let .Chop(rawValue):
+                case let .chop(rawValue):
                     return rawValue
-                case .SameFrameExtended:
+                case .sameFrameExtended:
                     return 251
-                case let .Append(rawValue):
+                case let .append(rawValue):
                     return rawValue
-                case .FullFrame:
+                case .fullFrame:
                     return 255
                 }
             }
         }
         
         enum VerificationTypeInfo {
-            case Top
-            case Integer
-            case Float
-            case Long
-            case Double
-            case Null
-            case Object(UInt16)
-            case Uninitialized(UInt16)
-            static func fromRaw(rawValue:UInt8, poolIndexOrOffset:UInt16 = 0) -> VerificationTypeInfo? {
+            case top
+            case integer
+            case float
+            case long
+            case double
+            case null
+            case object(UInt16)
+            case uninitialized(UInt16)
+            static func fromRaw(_ rawValue:UInt8, poolIndexOrOffset:UInt16 = 0) -> VerificationTypeInfo? {
                 switch rawValue {
                 case 0:
-                    return Top
+                    return top
                 case 1:
-                    return Integer
+                    return integer
                 case 2:
-                    return Float
+                    return float
                 case 4: // *sigh*
-                    return Long
+                    return long
                 case 3: //yes really
-                    return Double
+                    return double
                 case 5:
-                    return Null
+                    return null
                 case 6:
-                    return Object(poolIndexOrOffset)
+                    return object(poolIndexOrOffset)
                 case 7:
-                    return Uninitialized(poolIndexOrOffset)
+                    return uninitialized(poolIndexOrOffset)
                 default:
                     return nil
                 }
@@ -100,7 +100,7 @@ class StackMapTableAttribute: AttributeInfo {
             super.init()
         }
         
-        static func readVerificationTypeInfoFromData(data:NSData, inout cursor:Int) -> VerificationTypeInfo? {
+        static func readVerificationTypeInfoFromData(_ data:Data, cursor:inout Int) -> VerificationTypeInfo? {
             let temp1 : UInt8 = readFromData(data, cursor: &cursor)
             if temp1 == 6 || temp1 == 7 {
                 return VerificationTypeInfo.fromRaw(temp1, poolIndexOrOffset: NSSwapBigShortToHost(readFromData(data, cursor: &cursor)))
@@ -111,12 +111,12 @@ class StackMapTableAttribute: AttributeInfo {
             
         }
         
-        static func fromData(data:NSData, inout cursor:Int) -> StackMapFrame? {
+        static func fromData(_ data:Data, cursor:inout Int) -> StackMapFrame? {
             let tag : StackMapFrame.Tag = StackMapFrame.Tag.fromRaw(readFromData(data, cursor: &cursor))!
             switch tag {
-            case .Same:
+            case .same:
                 return SameFrame(frameType: tag)
-            case .SameLocals1StackItem:
+            case .sameLocals1StackItem:
                 return SameLocals1StackItemFrame(frameType: tag, data: data, cursor: &cursor)
             default:
                 return nil
@@ -129,7 +129,7 @@ class StackMapTableAttribute: AttributeInfo {
     
     class SameLocals1StackItemFrame: StackMapFrame {
         let stackItem : VerificationTypeInfo
-        init(frameType: Tag, data:NSData, inout cursor:Int) {
+        init(frameType: Tag, data:Data, cursor:inout Int) {
             let temp1 : UInt8 = readFromData(data, cursor: &cursor)
             if temp1 == 6 || temp1 == 7 {
                 stackItem = VerificationTypeInfo.fromRaw(temp1, poolIndexOrOffset: NSSwapBigShortToHost(readFromData(data, cursor: &cursor)))!
@@ -144,7 +144,7 @@ class StackMapTableAttribute: AttributeInfo {
     class SameLocals1StackItemFrameExtended: StackMapFrame {
         let offsetDelta : UInt16
         let stackItem : VerificationTypeInfo
-        init(frameType: Tag, data:NSData, inout cursor:Int) {
+        init(frameType: Tag, data:Data, cursor:inout Int) {
             offsetDelta = NSSwapBigShortToHost(readFromData(data, cursor: &cursor))
             stackItem = StackMapFrame.readVerificationTypeInfoFromData(data, cursor: &cursor)!
             super.init(frameType: frameType)
@@ -153,7 +153,7 @@ class StackMapTableAttribute: AttributeInfo {
     
     class ChopFrame: StackMapFrame {
         let offsetDelta : UInt16
-        init(frameType: Tag, data:NSData, inout cursor:Int) {
+        init(frameType: Tag, data:Data, cursor:inout Int) {
             offsetDelta = NSSwapBigShortToHost(readFromData(data, cursor: &cursor))
             super.init(frameType: frameType)
         }
@@ -161,7 +161,7 @@ class StackMapTableAttribute: AttributeInfo {
     
     class SameFrameExtended: StackMapFrame {
         let offsetDelta : UInt16
-        init(frameType: Tag, data:NSData, inout cursor:Int) {
+        init(frameType: Tag, data:Data, cursor:inout Int) {
             offsetDelta = NSSwapBigShortToHost(readFromData(data, cursor: &cursor))
             super.init(frameType: frameType)
         }
@@ -170,7 +170,7 @@ class StackMapTableAttribute: AttributeInfo {
     class AppendFrame: StackMapFrame {
         let offsetDelta : UInt16
         let locals : [VerificationTypeInfo]
-        init(frameType: Tag, data:NSData, inout cursor:Int) {
+        init(frameType: Tag, data:Data, cursor:inout Int) {
             offsetDelta = NSSwapBigShortToHost(readFromData(data, cursor: &cursor))
             let k = frameType.value() - 251
             var tempLocals = [VerificationTypeInfo]()
@@ -188,7 +188,7 @@ class StackMapTableAttribute: AttributeInfo {
         let locals : [VerificationTypeInfo]
         let numberOfStackItems : UInt16
         let stack : [VerificationTypeInfo]
-        init(frameType: Tag, data:NSData, inout cursor:Int) {
+        init(frameType: Tag, data:Data, cursor:inout Int) {
             offsetDelta = NSSwapBigShortToHost(readFromData(data, cursor: &cursor))
             numberOfLocals = NSSwapBigShortToHost(readFromData(data, cursor: &cursor))
             var tempLocals = [VerificationTypeInfo]()
@@ -209,7 +209,7 @@ class StackMapTableAttribute: AttributeInfo {
     
     let numberOfEntries : UInt16
     let entries : [StackMapFrame]
-    init(header:Header, data:NSData, inout cursor:Int) {
+    init(header:Header, data:Data, cursor:inout Int) {
         numberOfEntries = NSSwapBigShortToHost(readFromData(data, cursor: &cursor))
         var localEntries = [StackMapFrame]()
         for _ in 0..<numberOfEntries {

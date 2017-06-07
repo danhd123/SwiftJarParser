@@ -8,9 +8,9 @@
 
 import Foundation
 
-extension UInt8 : StringLiteralConvertible {
-    typealias ExtendedGraphemeClusterLiteralType = String
-    typealias UnicodeScalarLiteralType = String
+extension UInt8 : ExpressibleByStringLiteral {
+    public typealias ExtendedGraphemeClusterLiteralType = String
+    public typealias UnicodeScalarLiteralType = String
     
     public init(stringLiteral value: StringLiteralType){
         self.init(([UInt8]() + value.utf8)[0])
@@ -29,7 +29,7 @@ class AttributeInfo : NSObject {
     struct Header {
         let attributeNameIndex : UInt16
         let attributeLength : UInt32
-        init(data:NSData, inout cursor:Int) {
+        init(data:Data, cursor:inout Int) {
             attributeNameIndex = NSSwapBigShortToHost(readFromData(data, cursor: &cursor))
             attributeLength = NSSwapBigIntToHost(readFromData(data, cursor: &cursor))
         }
@@ -40,7 +40,7 @@ class AttributeInfo : NSObject {
         self.header = header
         super.init()
     }
-    static func fromData(data:NSData, inout cursor:Int, constantPool:[UInt16: ClassConstant]) -> AttributeInfo {
+    static func fromData(_ data:Data, cursor:inout Int, constantPool:[UInt16: ClassConstant]) -> AttributeInfo {
         let header = AttributeInfo.Header(data: data, cursor: &cursor)
         switch (constantPool[header.attributeNameIndex]! as! Utf8Constant).string {
         case "ConstantValue":
@@ -92,7 +92,7 @@ class AttributeInfo : NSObject {
 class ConstantValueAttribute : AttributeInfo {
     let constantValueIndex : UInt16
     let classConstant : ClassConstant //ooh, caching!
-    init(header:Header, data:NSData, inout cursor:Int, constantPool:[UInt16: ClassConstant]) {
+    init(header:Header, data:Data, cursor:inout Int, constantPool:[UInt16: ClassConstant]) {
         constantValueIndex = NSSwapBigShortToHost(readFromData(data, cursor: &cursor))
         classConstant = constantPool[constantValueIndex]!
         super.init(header: header)
@@ -106,7 +106,7 @@ class CodeAttribute: AttributeInfo {
         let endPC : UInt16
         let handlerPC : UInt16
         let catchType : UInt16
-        init(data:NSData, inout cursor:Int) {
+        init(data:Data, cursor:inout Int) {
             startPC = NSSwapBigShortToHost(readFromData(data, cursor: &cursor))
             endPC = NSSwapBigShortToHost(readFromData(data, cursor: &cursor))
             handlerPC = NSSwapBigShortToHost(readFromData(data, cursor: &cursor))
@@ -117,16 +117,16 @@ class CodeAttribute: AttributeInfo {
     let maxStack : UInt16
     let maxLocals : UInt16
     let codeLength : UInt32
-    let code : NSData
+    let code : Data
     let exceptionTableLength : UInt16
     let exceptionTable : [ExceptionEntry]
     let attributesCount : UInt16
     let attributes : [AttributeInfo]
-    init(header:Header, data:NSData, inout cursor:Int, constantPool:[UInt16: ClassConstant]) {
+    init(header:Header, data:Data, cursor:inout Int, constantPool:[UInt16: ClassConstant]) {
         maxStack = NSSwapBigShortToHost(readFromData(data, cursor: &cursor))
         maxLocals = NSSwapBigShortToHost(readFromData(data, cursor: &cursor))
         codeLength = NSSwapBigIntToHost(readFromData(data, cursor: &cursor))
-        code = data.subdataWithRange(NSMakeRange(cursor, Int(codeLength)))
+        code = (data as NSData).subdata(with: NSMakeRange(cursor, Int(codeLength)))
         cursor += Int(codeLength)
         exceptionTableLength = NSSwapBigShortToHost(readFromData(data, cursor: &cursor))
         var localTable = [ExceptionEntry]()
@@ -148,7 +148,7 @@ class ExceptionTableAttribute: AttributeInfo {
     let numberOfExceptions : UInt16
     let exceptionIndexTable : [UInt16]
     let exceptions : [ClassRefConstant]
-    init(header:Header, data:NSData, inout cursor:Int, constantPool:[UInt16: ClassConstant]) {
+    init(header:Header, data:Data, cursor:inout Int, constantPool:[UInt16: ClassConstant]) {
         numberOfExceptions = NSSwapBigShortToHost(readFromData(data, cursor: &cursor))
         var localIndexes = [UInt16]()
         for _ in 0..<numberOfExceptions {
@@ -166,7 +166,7 @@ class InnerClassAttribute: AttributeInfo {
     
     struct InnerClass {
         
-        struct AccessFlags: OptionSetType {
+        struct AccessFlags: OptionSet {
             let rawValue: UInt16
             init(rawValue: UInt16) { self.rawValue = rawValue }
             
@@ -192,7 +192,7 @@ class InnerClassAttribute: AttributeInfo {
         let innerClassRef : ClassRefConstant
         let outerClassRef : ClassRefConstant?
         let innerName : Utf8Constant?
-        init(data:NSData, inout cursor:Int, constantPool:[UInt16: ClassConstant]) {
+        init(data:Data, cursor:inout Int, constantPool:[UInt16: ClassConstant]) {
             innerClassInfoIndex = NSSwapBigShortToHost(readFromData(data, cursor: &cursor))
             outerClassInfoIndex = NSSwapBigShortToHost(readFromData(data, cursor: &cursor))
             innerNameIndex = NSSwapBigShortToHost(readFromData(data, cursor: &cursor))
@@ -205,7 +205,7 @@ class InnerClassAttribute: AttributeInfo {
     
     let numberOfClasses : UInt16
     let classes : [InnerClass]
-    init(header:Header, data:NSData, inout cursor:Int, constantPool:[UInt16: ClassConstant]) {
+    init(header:Header, data:Data, cursor:inout Int, constantPool:[UInt16: ClassConstant]) {
         numberOfClasses = NSSwapBigShortToHost(readFromData(data, cursor: &cursor))
         var localClasses = [InnerClass]()
         for _ in 0..<numberOfClasses {
@@ -222,7 +222,7 @@ class EnclosingMethodAttribute: AttributeInfo {
     //cached types:
     let classRef : ClassRefConstant
     let methodRef : NameAndTypeConstant? // yes really
-    init(header:Header, data:NSData, inout cursor:Int, constantPool:[UInt16: ClassConstant]) {
+    init(header:Header, data:Data, cursor:inout Int, constantPool:[UInt16: ClassConstant]) {
         classIndex = NSSwapBigShortToHost(readFromData(data, cursor: &cursor))
         methodIndex = NSSwapBigShortToHost(readFromData(data, cursor: &cursor))
         classRef = constantPool[classIndex]! as! ClassRefConstant
@@ -238,7 +238,7 @@ class SignatureAttribute: AttributeInfo {
     let signatureIndex : UInt16
     //cached:
     let signature : Utf8Constant
-    init(header:Header, data:NSData, inout cursor:Int, constantPool:[UInt16: ClassConstant]) {
+    init(header:Header, data:Data, cursor:inout Int, constantPool:[UInt16: ClassConstant]) {
         signatureIndex = NSSwapBigShortToHost(readFromData(data, cursor: &cursor))
         signature = constantPool[signatureIndex]! as! Utf8Constant
         super.init(header: header)
@@ -249,7 +249,7 @@ class SourceFileAttribute: AttributeInfo {
     let sourceFileIndex : UInt16
     //cached:
     let sourceFile : Utf8Constant
-    init(header:Header, data:NSData, inout cursor:Int, constantPool:[UInt16: ClassConstant]) {
+    init(header:Header, data:Data, cursor:inout Int, constantPool:[UInt16: ClassConstant]) {
         sourceFileIndex = NSSwapBigShortToHost(readFromData(data, cursor: &cursor))
         sourceFile = constantPool[sourceFileIndex]! as! Utf8Constant
         super.init(header: header)
@@ -257,9 +257,9 @@ class SourceFileAttribute: AttributeInfo {
 }
 
 class SourceDebugExtension: AttributeInfo {
-    let debugExtension : NSData
-    init(header:Header, data:NSData, inout cursor:Int, constantPool:[UInt16: ClassConstant]) {
-        debugExtension = data.subdataWithRange(NSMakeRange(cursor, Int(header.attributeLength)))
+    let debugExtension : Data
+    init(header:Header, data:Data, cursor:inout Int, constantPool:[UInt16: ClassConstant]) {
+        debugExtension = (data as NSData).subdata(with: NSMakeRange(cursor, Int(header.attributeLength)))
         cursor += Int(header.attributeLength)
         super.init(header: header)
     }
@@ -277,7 +277,7 @@ class LineNumberTableAttribute: AttributeInfo {
     
     let lineNumberTableLength : UInt16
     let lineNumberTable : [LineNumberEntry]
-    init(header:Header, data:NSData, inout cursor:Int) {
+    init(header:Header, data:Data, cursor:inout Int) {
         lineNumberTableLength = NSSwapBigShortToHost(readFromData(data, cursor: &cursor))
         var localTable = [LineNumberEntry]()
         for _ in 0..<lineNumberTableLength {
@@ -301,7 +301,7 @@ class LocalVariableTableAttribute: AttributeInfo {
         //cached:
         let name : Utf8Constant
         let descriptor : Utf8Constant
-        init(data:NSData, inout cursor:Int, constantPool:[UInt16: ClassConstant]) {
+        init(data:Data, cursor:inout Int, constantPool:[UInt16: ClassConstant]) {
             startPC = NSSwapBigShortToHost(readFromData(data, cursor: &cursor))
             length = NSSwapBigShortToHost(readFromData(data, cursor: &cursor))
             nameIndex = NSSwapBigShortToHost(readFromData(data, cursor: &cursor))
@@ -314,7 +314,7 @@ class LocalVariableTableAttribute: AttributeInfo {
     
     let localVariableTableLength : UInt16
     let localVariableTable : [LocalVariableEntry]
-    init(header:Header, data:NSData, inout cursor:Int, constantPool:[UInt16: ClassConstant]) {
+    init(header:Header, data:Data, cursor:inout Int, constantPool:[UInt16: ClassConstant]) {
         localVariableTableLength = NSSwapBigShortToHost(readFromData(data, cursor: &cursor))
         var tempTable = [LocalVariableEntry]()
         for _ in 0..<localVariableTableLength {
@@ -336,7 +336,7 @@ class LocalVariableTypeTableAttribute: AttributeInfo {
         //cached:
         let name : Utf8Constant
         let signature : Utf8Constant
-        init(data:NSData, inout cursor:Int, constantPool:[UInt16: ClassConstant]) {
+        init(data:Data, cursor:inout Int, constantPool:[UInt16: ClassConstant]) {
             startPC = NSSwapBigShortToHost(readFromData(data, cursor: &cursor))
             length = NSSwapBigShortToHost(readFromData(data, cursor: &cursor))
             nameIndex = NSSwapBigShortToHost(readFromData(data, cursor: &cursor))
@@ -349,7 +349,7 @@ class LocalVariableTypeTableAttribute: AttributeInfo {
     
     let localVariableTableLength : UInt16
     let localVariableTable : [LocalVariableEntry]
-    init(header:Header, data:NSData, inout cursor:Int, constantPool:[UInt16: ClassConstant]) {
+    init(header:Header, data:Data, cursor:inout Int, constantPool:[UInt16: ClassConstant]) {
         localVariableTableLength = NSSwapBigShortToHost(readFromData(data, cursor: &cursor))
         var tempTable = [LocalVariableEntry]()
         for _ in 0..<localVariableTableLength {
@@ -365,7 +365,7 @@ class DeprecatedAttribute: AttributeInfo {
 
 class RuntimeVisibleAnnotationsAttribute: AttributeInfo {
     let annotations : CountedAnnotations
-    init(header:Header, data:NSData, inout cursor:Int, constantPool:[UInt16: ClassConstant]) {
+    init(header:Header, data:Data, cursor:inout Int, constantPool:[UInt16: ClassConstant]) {
         annotations = CountedAnnotations(data:data, cursor: &cursor, constantPool: constantPool)
         super.init(header: header)
     }
@@ -373,7 +373,7 @@ class RuntimeVisibleAnnotationsAttribute: AttributeInfo {
 
 class RuntimeInvisibleAnnotationsAttribute: AttributeInfo {
     let annotations : CountedAnnotations
-    init(header:Header, data:NSData, inout cursor:Int, constantPool:[UInt16: ClassConstant]) {
+    init(header:Header, data:Data, cursor:inout Int, constantPool:[UInt16: ClassConstant]) {
         annotations = CountedAnnotations(data:data, cursor: &cursor, constantPool: constantPool)
         super.init(header: header)
     }
@@ -382,7 +382,7 @@ class RuntimeInvisibleAnnotationsAttribute: AttributeInfo {
 class RuntimeVisibleParameterAnnotationsAttribute: AttributeInfo {
     let numParameters : UInt8
     let paramaterAnnotations : [CountedAnnotations]
-    init(header:Header, data:NSData, inout cursor:Int, constantPool:[UInt16: ClassConstant]) {
+    init(header:Header, data:Data, cursor:inout Int, constantPool:[UInt16: ClassConstant]) {
         numParameters = readFromData(data, cursor: &cursor)
         var tempParams = [CountedAnnotations]()
         for _ in 0..<numParameters {
@@ -396,7 +396,7 @@ class RuntimeVisibleParameterAnnotationsAttribute: AttributeInfo {
 class RuntimeInvisibleParameterAnnotationsAttribute: AttributeInfo {
     let numParameters : UInt8
     let paramaterAnnotations : [CountedAnnotations]
-    init(header:Header, data:NSData, inout cursor:Int, constantPool:[UInt16: ClassConstant]) {
+    init(header:Header, data:Data, cursor:inout Int, constantPool:[UInt16: ClassConstant]) {
         numParameters = readFromData(data, cursor: &cursor)
         var tempParams = [CountedAnnotations]()
         for _ in 0..<numParameters {
@@ -409,7 +409,7 @@ class RuntimeInvisibleParameterAnnotationsAttribute: AttributeInfo {
 
 class AnnotationDefaultAttribute: AttributeInfo {
     let defaultValue : Annotation.ElementValuePair
-    init(header:Header, data:NSData, inout cursor:Int, constantPool:[UInt16: ClassConstant]) {
+    init(header:Header, data:Data, cursor:inout Int, constantPool:[UInt16: ClassConstant]) {
         defaultValue = Annotation.ElementValuePair.fromData(data, cursor: &cursor, constantPool: constantPool)
         super.init(header: header)
     }
@@ -423,7 +423,7 @@ class BootstrapMethodsAttribute: AttributeInfo {
         //cached:
         let bootstrapMethodRef : MethodOrFieldRefConstant
         let bootstrapArguments : [ClassConstant]
-        init(data:NSData, inout cursor:Int, constantPool:[UInt16: ClassConstant]) {
+        init(data:Data, cursor:inout Int, constantPool:[UInt16: ClassConstant]) {
             bootstrapMethodRefIndex = NSSwapBigShortToHost(readFromData(data, cursor: &cursor))
             numBootstrapArguments = NSSwapBigShortToHost(readFromData(data, cursor: &cursor))
             var tempIndicies = [UInt16]()
@@ -441,7 +441,7 @@ class BootstrapMethodsAttribute: AttributeInfo {
     
     let numBootstrapMethods : UInt16
     let bootstrapMethods : [BootstrapMethod]
-    init(header:Header, data:NSData, inout cursor:Int, constantPool:[UInt16: ClassConstant]) {
+    init(header:Header, data:Data, cursor:inout Int, constantPool:[UInt16: ClassConstant]) {
         numBootstrapMethods = NSSwapBigShortToHost(readFromData(data, cursor: &cursor))
         var tempMethods = [BootstrapMethod]()
         for _ in 0..<numBootstrapMethods {
@@ -453,9 +453,9 @@ class BootstrapMethodsAttribute: AttributeInfo {
 }
 
 class UnknownAttribute: AttributeInfo {
-    let info : NSData
-    init(header:Header, data:NSData, inout cursor:Int) {
-        info = data.subdataWithRange(NSMakeRange(cursor, Int(header.attributeLength)))
+    let info : Data
+    init(header:Header, data:Data, cursor:inout Int) {
+        info = (data as NSData).subdata(with: NSMakeRange(cursor, Int(header.attributeLength)))
         cursor += Int(header.attributeLength)
         super.init(header: header)
     }

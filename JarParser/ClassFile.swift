@@ -11,7 +11,7 @@ import Foundation
 
 struct ClassFile {
     
-    struct AccessFlags: OptionSetType {
+    struct AccessFlags: OptionSet {
         let rawValue: UInt16
         init(rawValue: UInt16) { self.rawValue = rawValue }
         
@@ -27,7 +27,7 @@ struct ClassFile {
         
     }
     
-    let data : NSData
+    let data : Data
     let magic : UInt32
     let minorVersion : UInt16
     let majorVersion : UInt16
@@ -44,8 +44,8 @@ struct ClassFile {
     let methods : [MethodInfo]
     let attributesCount : UInt16
     let attributes : [AttributeInfo]
-    init?(withData data:NSData) {
-        if (data.length < 10) {
+    init?(withData data:Data) {
+        if (data.count < 10) {
             return nil
         }
         var cursor = 0
@@ -56,8 +56,8 @@ struct ClassFile {
             let tag = ClassConstant.Tag(rawValue: readFromData(data, cursor: &cursor))
             let constant = ClassConstant.withTag(tag!, cursor: &cursor, data: self.data)
             constants[i] = constant
-            if (constant.tag == ClassConstant.Tag.Long || constant.tag == ClassConstant.Tag.Double) {
-                i++
+            if (constant.tag == ClassConstant.Tag.long || constant.tag == ClassConstant.Tag.double) {
+                i += 1
             }
         }
         constantPool = constants
@@ -93,7 +93,7 @@ struct ClassFile {
         attributes = tempAttrs
     }
     
-    static func parseHeader(inout cursor:Int, data:NSData) -> (UInt32, UInt16, UInt16, UInt16) {
+    static func parseHeader(_ cursor:inout Int, data:Data) -> (UInt32, UInt16, UInt16, UInt16) {
         let magic = NSSwapBigIntToHost(readFromData(data, cursor: &cursor))
         assert(magic == 0xCAFEBABE, "This is not a Java class file")
         let minorVersion = NSSwapBigShortToHost(readFromData(data, cursor: &cursor))

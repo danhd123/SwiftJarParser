@@ -14,34 +14,34 @@ extension AttributeInfo {
         class ElementValuePair : NSObject {
             
             enum Tag : UInt8 {
-                case Byte = "B"
-                case Char = "C"
-                case Double = "D"
-                case Float = "F"
-                case Integer = "I"
-                case Long = "J"
-                case Short = "S"
-                case Boolean = "Z"
-                case String = "s"
-                case Enum = "e"
-                case Class = "c"
-                case Annotation = "@"
-                case Array = "["
+                case byte = "B"
+                case char = "C"
+                case double = "D"
+                case float = "F"
+                case integer = "I"
+                case long = "J"
+                case short = "S"
+                case boolean = "Z"
+                case string = "s"
+                case `enum` = "e"
+                case `class` = "c"
+                case annotation = "@"
+                case array = "["
             }
             
             let tag : Tag
-            static func fromData(data:NSData, inout cursor:Int, constantPool:[UInt16: ClassConstant]) -> ElementValuePair {
+            static func fromData(_ data:Data, cursor:inout Int, constantPool:[UInt16: ClassConstant]) -> ElementValuePair {
                 let tag = Tag(rawValue: readFromData(data, cursor: &cursor))!
                 switch tag {
-                case .Byte, .Char, .Double, .Float, .Integer, .Long, .Short, .Boolean, .String:
+                case .byte, .char, .double, .float, .integer, .long, .short, .boolean, .string:
                     return ConstValue(tag: tag, data: data, cursor: &cursor, constantPool: constantPool)
-                case .Enum:
+                case .enum:
                     return EnumValue(tag: tag, data: data, cursor: &cursor, constantPool: constantPool)
-                case .Class:
+                case .class:
                     return ClassValue(tag: tag, data: data, cursor: &cursor, constantPool: constantPool)
-                case .Annotation:
+                case .annotation:
                     return AnnotationValue(tag: tag, data: data, cursor: &cursor, constantPool: constantPool)
-                case .Array:
+                case .array:
                     return ArrayValue(tag: tag, data: data, cursor: &cursor, constantPool: constantPool)
                 }
             }
@@ -55,7 +55,7 @@ extension AttributeInfo {
             let constValueIndex : UInt16
             //cached
             let constant : ClassConstant
-            init(tag:Tag, data:NSData, inout cursor:Int, constantPool:[UInt16: ClassConstant]) {
+            init(tag:Tag, data:Data, cursor:inout Int, constantPool:[UInt16: ClassConstant]) {
                 constValueIndex = NSSwapBigShortToHost(readFromData(data, cursor: &cursor))
                 constant = constantPool[constValueIndex]!
                 super.init(tag: tag)
@@ -68,7 +68,7 @@ extension AttributeInfo {
             //cached
             let typeName : Utf8Constant
             let constName : Utf8Constant
-            init(tag:Tag, data:NSData, inout cursor:Int, constantPool:[UInt16: ClassConstant]) {
+            init(tag:Tag, data:Data, cursor:inout Int, constantPool:[UInt16: ClassConstant]) {
                 typeNameIndex = NSSwapBigShortToHost(readFromData(data, cursor: &cursor))
                 constNameIndex = NSSwapBigShortToHost(readFromData(data, cursor: &cursor))
                 typeName = constantPool[typeNameIndex]! as! Utf8Constant
@@ -81,7 +81,7 @@ extension AttributeInfo {
             let classInfoIndex : UInt16
             //cached
             let classInfo : ClassRefConstant
-            init(tag:Tag, data:NSData, inout cursor:Int, constantPool:[UInt16: ClassConstant]) {
+            init(tag:Tag, data:Data, cursor:inout Int, constantPool:[UInt16: ClassConstant]) {
                 classInfoIndex = NSSwapBigShortToHost(readFromData(data, cursor: &cursor))
                 classInfo = constantPool[classInfoIndex]! as! ClassRefConstant
                 super.init(tag: tag)
@@ -90,7 +90,7 @@ extension AttributeInfo {
         
         class AnnotationValue: ElementValuePair {
             let annotation : Annotation
-            init(tag:Tag, data:NSData, inout cursor:Int, constantPool:[UInt16: ClassConstant]) {
+            init(tag:Tag, data:Data, cursor:inout Int, constantPool:[UInt16: ClassConstant]) {
                 annotation = Annotation(data: data, cursor: &cursor, constantPool: constantPool)
                 super.init(tag: tag)
             }
@@ -99,7 +99,7 @@ extension AttributeInfo {
         class ArrayValue: ElementValuePair {
             let numValues : UInt16
             let values : [ElementValuePair]
-            init(tag:Tag, data:NSData, inout cursor:Int, constantPool:[UInt16: ClassConstant]) {
+            init(tag:Tag, data:Data, cursor:inout Int, constantPool:[UInt16: ClassConstant]) {
                 numValues = NSSwapBigShortToHost(readFromData(data, cursor: &cursor))
                 var tempValues = [ElementValuePair]()
                 for _ in 0..<numValues {
@@ -113,7 +113,7 @@ extension AttributeInfo {
         let typeIndex : UInt16
         let numElementValuePairs : UInt16
         let elementValuePairs : [ElementValuePair]
-        init(data:NSData, inout cursor:Int, constantPool:[UInt16: ClassConstant]) {
+        init(data:Data, cursor:inout Int, constantPool:[UInt16: ClassConstant]) {
             typeIndex = NSSwapBigShortToHost(readFromData(data, cursor: &cursor))
             numElementValuePairs = NSSwapBigShortToHost(readFromData(data, cursor: &cursor))
             var tempEVPs = [ElementValuePair]()
@@ -126,7 +126,7 @@ extension AttributeInfo {
     struct CountedAnnotations {
         let numAnnotations : UInt16
         let annotations : [Annotation]
-        init(data:NSData, inout cursor:Int, constantPool:[UInt16: ClassConstant]) {
+        init(data:Data, cursor:inout Int, constantPool:[UInt16: ClassConstant]) {
             numAnnotations = NSSwapBigShortToHost(readFromData(data, cursor: &cursor))
             var tempAnnotations = [Annotation]()
             for _ in 0..<numAnnotations {
